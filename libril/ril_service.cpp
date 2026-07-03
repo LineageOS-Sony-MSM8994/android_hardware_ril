@@ -8416,7 +8416,7 @@ void radio::registerService(RIL_RadioFunctions *callbacks, CommandInfo *commands
     using namespace android::hardware;
     int simCount = 1;
     const char *serviceNames[] = {
-            android::RIL_getServiceName()
+            RIL1_SERVICE_NAME
             #if (SIM_COUNT >= 2)
             , RIL2_SERVICE_NAME
             #if (SIM_COUNT >= 3)
@@ -8432,11 +8432,18 @@ void radio::registerService(RIL_RadioFunctions *callbacks, CommandInfo *commands
     simCount = SIM_COUNT;
     #endif
 
+    const char *myService = android::RIL_getServiceName();
+
     s_vendorFunctions = callbacks;
     s_commands = commands;
 
     configureRpcThreadpool(1, true /* callerWillJoin */);
     for (int i = 0; i < simCount; i++) {
+        if (strcmp(serviceNames[i], myService) != 0) {
+            RLOGD("registerService: instance %s skips slot %d (%s)",
+                    myService, i, serviceNames[i]);
+            continue;
+        }
         pthread_rwlock_t *radioServiceRwlockPtr = getRadioServiceRwlock(i);
         [[maybe_unused]] int ret = pthread_rwlock_wrlock(radioServiceRwlockPtr);
         assert(ret == 0);
