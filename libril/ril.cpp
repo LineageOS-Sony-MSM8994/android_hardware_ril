@@ -193,6 +193,21 @@ char * RIL_getServiceName() {
     return ril_service_name;
 }
 
+#if defined(ANDROID_MULTI_SIM)
+static RIL_SOCKET_ID getOwnSocketId() {
+#if (SIM_COUNT >= 2)
+    if (strcmp(ril_service_name, RIL2_SERVICE_NAME) == 0) return RIL_SOCKET_2;
+#if (SIM_COUNT >= 3)
+    if (strcmp(ril_service_name, RIL3_SERVICE_NAME) == 0) return RIL_SOCKET_3;
+#if (SIM_COUNT >= 4)
+    if (strcmp(ril_service_name, RIL4_SERVICE_NAME) == 0) return RIL_SOCKET_4;
+#endif
+#endif
+#endif
+    return RIL_SOCKET_1;
+}
+#endif
+
 RequestInfo *
 addRequestToList(int serial, int slotId, int request) {
     RequestInfo *pRI;
@@ -732,7 +747,8 @@ void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
     RIL_SOCKET_ID soc_id = RIL_SOCKET_1;
 
 #if defined(ANDROID_MULTI_SIM)
-    soc_id = socket_id;
+    (void) socket_id;
+    soc_id = getOwnSocketId();
 #endif
 
 
