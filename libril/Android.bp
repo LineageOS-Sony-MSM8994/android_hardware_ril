@@ -50,14 +50,19 @@ cc_library_shared {
         "librilutils",
         "libutils",
     ],
-    static_libs: ["libprotobuf-c-nano-enable_malloc-32bit"],
+    static_libs: select(soong_config_variable("ril", "legacy_nanopb"), {
+        true: ["libprotobuf-c-nano-enable_malloc-legacy-ltype"],
+        default: ["libprotobuf-c-nano-enable_malloc-32bit"],
+    }),
     cflags: [
         "-Wall",
         "-Wextra",
         "-Wno-unused-parameter",
         "-Werror",
-        "-DPB_FIELD_32BIT",
-    ] + select(soong_config_variable("ril", "sim_count"), {
+    ] + select(soong_config_variable("ril", "legacy_nanopb"), {
+        true: ["-DPB_LEGACY_LTYPE_NUMBERING"],
+        default: ["-DPB_FIELD_32BIT"],
+    }) + select(soong_config_variable("ril", "sim_count"), {
         "2": [
             "-DANDROID_MULTI_SIM",
             "-DDSDA_RILD1",

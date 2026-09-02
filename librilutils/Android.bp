@@ -9,7 +9,18 @@ package {
     default_applicable_licenses: ["hardware_ril_license"],
 }
 
-cc_library {
+soong_config_module_type {
+    name: "librilutils_cc_library",
+    module_type: "cc_library",
+    config_namespace: "ril",
+    bool_variables: ["legacy_nanopb"],
+    properties: [
+        "cflags",
+        "proto.type",
+    ],
+}
+
+librilutils_cc_library {
     name: "librilutils",
 
     srcs: [
@@ -25,12 +36,26 @@ cc_library {
         "-Wall",
         "-Wextra",
         "-Werror",
-        "-DPB_FIELD_32BIT",
     ],
 
     proto: {
-        type: "nanopb-c-enable_malloc-32bit",
         export_proto_headers: true,
+    },
+
+    // Vendor RILs predating the 32-bit pb_field_t switch need the old descriptor ABI.
+    soong_config_variables: {
+        legacy_nanopb: {
+            cflags: ["-DPB_LEGACY_LTYPE_NUMBERING"],
+            proto: {
+                type: "nanopb-c-enable_malloc",
+            },
+            conditions_default: {
+                cflags: ["-DPB_FIELD_32BIT"],
+                proto: {
+                    type: "nanopb-c-enable_malloc-32bit",
+                },
+            },
+        },
     },
 
     vendor: true,
